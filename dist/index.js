@@ -58,8 +58,6 @@ const getPRBody = async (duration) => {
 
   const finalBody = filteredPRs.map((edge) => edge.node.body).join("\n");
 
-  console.log(finalBody)
-
   return finalBody
 }
 
@@ -93,7 +91,6 @@ const upsertContentSync = (filePath, content) => {
 
   fs.writeSync(fd, buffer, 0, buffer.length, 0);
   fs.writeSync(fd, curr_data, 0, curr_data.length, buffer.length);
-  console.log(buffer.toString())
   fs.close(fd, (err) => {
     throw new Error(err)
   });
