@@ -1,18 +1,27 @@
 const core = require('@actions/core');
-const wait = require('./wait');
+const getPRBody = require('./getPRBody');
+const findOrCreateReleaseFile = require('./io').findOrCreateReleaseFile
+const getFilePath = require('./io').getFilePath
+const durationString = require('./utils').durationString
+const upsertContentSync = require('./io').upsertContent
 
-
-// most @actions toolkit packages have async methods
 async function run() {
   try {
-    const ms = core.getInput('milliseconds');
-    core.info(`Waiting ${ms} milliseconds ...`);
+    const duration = core.getInput('duration');
+    core.info(`Getting PR body for ${duration} ...`);
+    const body = await getPRBody(duration);
 
-    core.debug((new Date()).toTimeString()); // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-    await wait(parseInt(ms));
-    core.info((new Date()).toTimeString());
+    core.info(`Find or create the release file`);
+    await findOrCreateReleaseFile(duration)
 
-    core.setOutput('time', new Date().toTimeString());
+    core.info(`Get file name`)
+    const filePath = getFilePath(duration)
+
+    core.info(`Build content`)
+    const content = `Release notes for the ${durationString(duration)}\n${body}\n\n`
+
+    upsertContentSync(filePath, content)
+
   } catch (error) {
     core.setFailed(error.message);
   }

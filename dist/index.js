@@ -1,6 +1,123 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 629:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const github = __nccwpck_require__(716);
+const core = __nccwpck_require__(186);
+const query = __nccwpck_require__(441)
+const getStartOfLastWeek = __nccwpck_require__(252).getStartOfLastWeek
+const getStartOfLastMonth = __nccwpck_require__(252).getStartOfLastMonth
+
+const getPRBody = async (duration) => {
+  const myToken = core.getInput('github_token');
+  const octokit = github.getOctokit(myToken);
+
+  let timeAfter;
+  if (duration.toLowerCase() === 'last week') {
+    timeAfter = getStartOfLastWeek()
+  } else if (duration.toLowerCase() === 'last month') {
+    timeAfter =  getStartOfLastMonth()
+  }
+
+  const timeAfterString = timeAfter.toISOString().split('T')[0]
+
+  core.info(`Getting PRs merged after ${timeAfterString} ...`);
+
+  const query_string = `is:merged is:pr repo:morethanmetrics/smaply label:release created:>=${timeAfterString}`
+
+  const variables = {
+    query_string
+  }
+
+  const result = await octokit.graphql(query, variables);
+
+  const data = result.data;
+
+  let timeBefore;
+  if (duration.toLowerCase() === 'last week') {
+    const last = timeAfter.setDate(timeAfter.getDate() + 6)
+    timeBefore = new Date(last)
+  } else if (duration.toLowerCase() === 'last month') {
+    const year = timeAfter.getFullYear()
+    const month = timeAfter.getMonth()
+    timeBefore = new Date(year, month + 1, 0)
+  }
+
+  timeBefore.setHours(23)
+  timeBefore.setMinutes(59)
+  timeBefore.setSeconds(59)
+
+  const prs = data.search.edges;
+
+  const filteredPRs = prs.filter(pr => {
+    const mergedAt = new Date(pr.mergedAt).getTime();
+    return (timeAfter.getTime() < mergedAt && mergedAt < timeBefore.getTime())
+  })
+
+  const finalBody = filteredPRs.map((edge) => edge.node.body).join("\n");
+
+  console.log(finalBody)
+
+  return finalBody
+}
+
+module.exports = getPRBody;
+
+
+/***/ }),
+
+/***/ 562:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const fs = __nccwpck_require__(747)
+
+const findOrCreateReleaseFile = async (duration) => {
+  const fileName = getFilePath(duration);
+  await upsertFile(fileName);
+}
+
+const getFilePath = (duration) => {
+  if (duration.toLowerCase() === 'last week') {
+    return './weekly_release.md'
+  } else if (duration.toLowerCase() === 'last month') {
+    return './monthly_release.md'
+  }
+}
+
+const upsertContentSync = (filePath, content) => {
+  const curr_data = fs.readFileSync(filePath);
+  const fd = fs.openSync(filePath, 'w+');
+  const buffer = Buffer.from(content);
+
+  fs.writeSync(fd, buffer, 0, buffer.length, 0);
+  fs.writeSync(fd, curr_data, 0, curr_data.length, buffer.length);
+  console.log(buffer.toString())
+  fs.close(fd, (err) => {
+    throw new Error(err)
+  });
+}
+
+const upsertFile = async (file) => {
+  try {
+    // try to read file
+    await fs.promises.readFile(file)
+  } catch (error) {
+    // create empty file, because it wasn't found
+    await fs.promises.writeFile(file, '')
+  }
+}
+
+module.exports = {
+  findOrCreateReleaseFile,
+  upsertContentSync,
+  getFilePath
+}
+
+
+/***/ }),
+
 /***/ 351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -1555,19 +1672,94 @@ exports.debug = debug; // for test
 
 /***/ }),
 
-/***/ 258:
+/***/ 441:
 /***/ ((module) => {
 
-let wait = function (milliseconds) {
-  return new Promise((resolve) => {
-    if (typeof milliseconds !== 'number') {
-      throw new Error('milliseconds not a number');
+const query = `
+query releasePRs($query_string: String!) {
+  search(query: $query_string, type: ISSUE, first: 100) {
+    issueCount
+    edges {
+      node {
+        ... on PullRequest {
+          number
+          createdAt
+          mergedAt
+          title
+          headRef {
+            name
+            repository {
+              nameWithOwner
+            }
+          }
+          body
+        }
+      }
     }
-    setTimeout(() => resolve("done!"), milliseconds)
-  });
+  }
+}
+`
+
+module.exports = query
+
+
+/***/ }),
+
+/***/ 252:
+/***/ ((module) => {
+
+const getStartOfLastMonth = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  let month = date.getMonth();
+  let f = new Date(year, month, 1).getDate();
+
+  f = f < 10 ? '0' + f : f;
+  month = month === 0 ? month + 1 : month
+  month = month < 10 ? '0' + month : month;
+  const firstDay = new Date(`${year}-${month}-${f}`);
+
+  return firstDay;
 };
 
-module.exports = wait;
+const getStartOfLastWeek = () => {
+  const date = new Date();
+  const first = date.getDate() - date.getDay() - 7
+  date.setDate(first)
+  const year = date.getFullYear();
+  let month = date.getMonth() + 1;
+  let f = date.getDate();
+
+  f = f < 10 ? '0' + f : f;
+  month = month < 10 ? '0' + month : month;
+  const firstDay = new Date(`${year}-${month}-${f}`);
+
+  return firstDay;
+}
+
+const durationString = (duration) => {
+  if (duration.toLowerCase() === 'last week') {
+    const lastWeek = getStartOfLastWeek()
+    return lastWeek.toDateString()
+  } else if (duration.toLowerCase() === 'last month') {
+    const lastMonth = getStartOfLastMonth()
+    return lastMonth.toDateString()
+  }
+}
+
+module.exports = {
+  getStartOfLastMonth,
+  getStartOfLastWeek,
+  durationString
+}
+
+
+/***/ }),
+
+/***/ 716:
+/***/ ((module) => {
+
+module.exports = eval("require")("@actions/github");
 
 
 /***/ }),
@@ -1694,20 +1886,29 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
 const core = __nccwpck_require__(186);
-const wait = __nccwpck_require__(258);
+const getPRBody = __nccwpck_require__(629);
+const findOrCreateReleaseFile = __nccwpck_require__(562).findOrCreateReleaseFile
+const getFilePath = __nccwpck_require__(562).getFilePath
+const durationString = __nccwpck_require__(252).durationString
+const upsertContentSync = __nccwpck_require__(562).upsertContent
 
-
-// most @actions toolkit packages have async methods
 async function run() {
   try {
-    const ms = core.getInput('milliseconds');
-    core.info(`Waiting ${ms} milliseconds ...`);
+    const duration = core.getInput('duration');
+    core.info(`Getting PR body for ${duration} ...`);
+    const body = await getPRBody(duration);
 
-    core.debug((new Date()).toTimeString()); // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-    await wait(parseInt(ms));
-    core.info((new Date()).toTimeString());
+    core.info(`Find or create the release file`);
+    await findOrCreateReleaseFile(duration)
 
-    core.setOutput('time', new Date().toTimeString());
+    core.info(`Get file name`)
+    const filePath = getFilePath(duration)
+
+    core.info(`Build content`)
+    const content = `Release notes for the ${durationString(duration)}\n${body}\n\n`
+
+    upsertContentSync(filePath, content)
+
   } catch (error) {
     core.setFailed(error.message);
   }

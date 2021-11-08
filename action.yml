@@ -1,13 +1,14 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+---
+name: Release notes generator
+description: Updates the release notes
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  duration:
+    description: 'Release notes duration since. One of "last week" or "last month"'
     required: true
-    default: '1000'
+    default: 'last week'
 outputs:
-  time: # output will be available to future steps
-    description: 'The current time after waiting'
+  body: # output will be available to future steps
+    description: 'Content body of the notes'
 runs:
   using: 'node12'
   main: 'dist/index.js'
