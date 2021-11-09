@@ -7,7 +7,7 @@ inputs:
     required: true
     default: last week
   github_token:
-    description: Github Token. You can pass it as ${{ secrets.GITHUB_TOKEN }}
+    description: Github Token. You can pass it as secrets.GITHUB_TOKEN
     required: true
 outputs:
   body: # output will be available to future steps
