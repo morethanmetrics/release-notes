@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const octokit = require('./ghClient');
+const getOctokit = require('./ghClient');
 const query = require('./pullRequests.gql');
 const getStartTime = require('./utils').getStartTime;
 const getEndTime = require('./utils').getEndTime;
@@ -18,6 +18,7 @@ const getPRBody = async (duration) => {
     query_string,
   };
 
+  const octokit = getOctokit();
   const result = await octokit.graphql(query, variables);
 
   const endTime = getEndTime(duration, startTime);
