@@ -24,12 +24,15 @@ const getPRBody = async (duration) => {
   core.info(JSON.stringify(result))
 
   const prs = result.data.search.edges;
+  core.info(`prs: ${prs}`)
 
   const endTime = getEndTime(duration, startTime);
 
   const filteredPRs = filterRelevantPRs(prs, endTime, startTime);
+  core.info(`filteredPRs: ${filteredPRs}`)
 
   const finalBody = composeBody(filteredPRs);
+  core.info(`finalBody: ${finalBody}`)
 
   return finalBody;
 };
