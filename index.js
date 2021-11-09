@@ -10,6 +10,7 @@ async function run() {
     const duration = core.getInput('duration');
 
     if (duration.toLowerCase() !== 'last week' || duration.toLowerCase() !== 'last month') {
+      core.info(duration);
       core.error('Invalid duration value. Has to be one of "last week" or "last month"')
     }
 
