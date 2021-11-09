@@ -5,13 +5,13 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint .",
-    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "prepare": "ncc build index.js -o dist --source-map --minify --license licenses.txt",
     "test": "jest",
     "all": "npm run lint && npm run prepare && npm run test"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/javascript-action.git"
+    "url": "git+https://github.com/morethanmetrics/release-notes.git"
   },
   "keywords": [
     "GitHub",
@@ -21,11 +21,12 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/actions/javascript-action/issues"
+    "url": "https://github.com/morethanmetrics/release-notes/issues"
   },
-  "homepage": "https://github.com/actions/javascript-action#readme",
+  "homepage": "https://github.com/morethanmetrics/release-notes#readme",
   "dependencies": {
-    "@actions/core": "^1.2.5"
+    "@actions/core": "^1.2.5",
+    "@actions/github": "^5.0.0"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.31.1",

@@ -1,58 +1,34 @@
-const github = require('@actions/github');
 const core = require('@actions/core');
-const query = require('./pullRequests.gql')
-const getStartOfLastWeek = require('./utils').getStartOfLastWeek
-const getStartOfLastMonth = require('./utils').getStartOfLastMonth
+const octokit = require('./ghClient');
+const query = require('./pullRequests.gql');
+const getStartTime = require('./utils').getStartTime;
+const getEndTime = require('./utils').getEndTime;
+const filterRelevantPRs = require('./utils').filterRelevantPRs;
+const composeBody = require('./utils').composeBody;
 
 const getPRBody = async (duration) => {
-  const myToken = core.getInput('github_token');
-  const octokit = github.getOctokit(myToken);
+  const startTime = getStartTime(duration);
+  const startTimeString = startTime.toISOString().split('T')[0];
 
-  let timeAfter;
-  if (duration.toLowerCase() === 'last week') {
-    timeAfter = getStartOfLastWeek()
-  } else if (duration.toLowerCase() === 'last month') {
-    timeAfter =  getStartOfLastMonth()
-  }
+  core.info(`Getting PRs merged after ${startTimeString} ...`);
 
-  const timeAfterString = timeAfter.toISOString().split('T')[0]
-
-  core.info(`Getting PRs merged after ${timeAfterString} ...`);
-
-  const query_string = `is:merged is:pr repo:morethanmetrics/smaply label:release created:>=${timeAfterString}`
+  const query_string = `is:merged is:pr repo:morethanmetrics/smaply label:release created:>=${startTimeString}`;
 
   const variables = {
-    query_string
-  }
+    query_string,
+  };
 
   const result = await octokit.graphql(query, variables);
 
-  const data = result.data;
+  const endTime = getEndTime(duration, startTime);
 
-  let timeBefore;
-  if (duration.toLowerCase() === 'last week') {
-    const last = timeAfter.setDate(timeAfter.getDate() + 6)
-    timeBefore = new Date(last)
-  } else if (duration.toLowerCase() === 'last month') {
-    const year = timeAfter.getFullYear()
-    const month = timeAfter.getMonth()
-    timeBefore = new Date(year, month + 1, 0)
-  }
+  const prs = result.data.search.edges;
 
-  timeBefore.setHours(23)
-  timeBefore.setMinutes(59)
-  timeBefore.setSeconds(59)
+  const filteredPRs = filterRelevantPRs(prs, endTime, startTime);
 
-  const prs = data.search.edges;
+  const finalBody = composeBody(filteredPRs);
 
-  const filteredPRs = prs.filter(pr => {
-    const mergedAt = new Date(pr.mergedAt).getTime();
-    return (timeAfter.getTime() < mergedAt && mergedAt < timeBefore.getTime())
-  })
-
-  const finalBody = filteredPRs.map((edge) => edge.node.body).join("\n");
-
-  return finalBody
-}
+  return finalBody;
+};
 
 module.exports = getPRBody;

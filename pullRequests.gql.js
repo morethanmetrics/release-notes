@@ -9,18 +9,12 @@ query releasePRs($query_string: String!) {
           createdAt
           mergedAt
           title
-          headRef {
-            name
-            repository {
-              nameWithOwner
-            }
-          }
           body
         }
       }
     }
   }
 }
-`
+`;
 
-module.exports = query
+module.exports = query;
