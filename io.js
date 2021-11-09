@@ -1,17 +1,17 @@
-const fs = require('fs')
+const fs = require('fs');
 
 const findOrCreateReleaseFile = async (duration) => {
   const fileName = getFilePath(duration);
   await upsertFile(fileName);
-}
+};
 
 const getFilePath = (duration) => {
   if (duration.toLowerCase() === 'last week') {
-    return './weekly_release.md'
+    return './weekly_release.md';
   } else if (duration.toLowerCase() === 'last month') {
-    return './monthly_release.md'
+    return './monthly_release.md';
   }
-}
+};
 
 const upsertContentSync = (filePath, content) => {
   const curr_data = fs.readFileSync(filePath);
@@ -20,24 +20,23 @@ const upsertContentSync = (filePath, content) => {
 
   fs.writeSync(fd, buffer, 0, buffer.length, 0);
   fs.writeSync(fd, curr_data, 0, curr_data.length, buffer.length);
-  console.log(buffer.toString())
-  fs.close(fd, (err) => {
-    throw new Error(err)
+  fs.close(fd, () => {
+    console.info('File written');
   });
-}
+};
 
 const upsertFile = async (file) => {
   try {
     // try to read file
-    await fs.promises.readFile(file)
+    await fs.promises.readFile(file);
   } catch (error) {
     // create empty file, because it wasn't found
-    await fs.promises.writeFile(file, '')
+    await fs.promises.writeFile(file, '');
   }
-}
+};
 
 module.exports = {
   findOrCreateReleaseFile,
   upsertContentSync,
   getFilePath
-}
+};
