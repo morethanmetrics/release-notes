@@ -21,9 +21,11 @@ const getPRBody = async (duration) => {
   const octokit = getOctokit();
   const result = await octokit.graphql(query, variables);
 
-  const endTime = getEndTime(duration, startTime);
+  core.info(JSON.stringify(result))
 
   const prs = result.data.search.edges;
+
+  const endTime = getEndTime(duration, startTime);
 
   const filteredPRs = filterRelevantPRs(prs, endTime, startTime);
 
