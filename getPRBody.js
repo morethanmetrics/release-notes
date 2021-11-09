@@ -23,7 +23,7 @@ const getPRBody = async (duration) => {
 
   core.info(JSON.stringify(result))
 
-  const prs = result.data.search.edges;
+  const prs = result.search.edges;
   core.info(`prs: ${prs}`)
 
   const endTime = getEndTime(duration, startTime);
