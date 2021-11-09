@@ -24,8 +24,9 @@ async function run() {
       core.info(`Find or create the release file`);
       await findOrCreateReleaseFile(duration);
 
-      core.info(`Get file name`);
       const filePath = getFilePath(duration);
+      core.info(`Upserting to file: ${filePath}`);
+      core.info(`Content: ${content}`);
 
       upsertContentSync(filePath, content);
     });

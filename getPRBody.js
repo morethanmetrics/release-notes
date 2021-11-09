@@ -21,19 +21,13 @@ const getPRBody = async (duration) => {
   const octokit = getOctokit();
   const result = await octokit.graphql(query, variables);
 
-  core.info(JSON.stringify(result))
-
   const prs = result.search.edges;
-  core.info(`prs: ${prs}`)
 
   const endTime = getEndTime(duration, startTime);
 
   const filteredPRs = filterRelevantPRs(prs, endTime, startTime);
-  core.info(`filteredPRs: ${filteredPRs}`)
 
   const finalBody = composeBody(filteredPRs);
-  core.info(`finalBody: ${finalBody}`)
-
   return finalBody;
 };
 
