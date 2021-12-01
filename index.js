@@ -30,6 +30,7 @@ async function run() {
 
       upsertContentSync(filePath, content);
     });
+    core.setOutput('body', content)
   } catch (error) {
     core.setFailed(error.message);
   }
