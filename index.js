@@ -1,9 +1,10 @@
 const core = require('@actions/core');
-const getPRBody = require('./getPRBody');
-const findOrCreateReleaseFile = require('./io').findOrCreateReleaseFile;
-const getFilePath = require('./io').getFilePath;
-const durationString = require('./utils').durationString;
-const upsertContentSync = require('./io').upsertContentSync;
+
+const getPRBody = require('./lib/getPRBody');
+const findOrCreateReleaseFile = require('./lib/io').findOrCreateReleaseFile;
+const getFilePath = require('./lib/io').getFilePath;
+const upsertContentSync = require('./lib/io').upsertContentSync;
+const durationString = require('./lib/utils').durationString;
 
 async function run() {
   try {
