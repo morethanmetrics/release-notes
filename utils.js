@@ -67,7 +67,8 @@ const getEndTime = (duration, startTime) => {
 const filterRelevantPRs = (prs, endTime, startTime) => {
   return prs.filter(pr => {
     const mergedAt = new Date(pr.node.mergedAt).getTime();
-    return (startTime.getTime() <= mergedAt && mergedAt <= endTime.getTime());
+    const title = pr.node.title;
+    return (startTime.getTime() <= mergedAt && mergedAt <= endTime.getTime() && !title.toLowerCase().startsWith('release notes for'));
   })
 };
 
